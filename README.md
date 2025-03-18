@@ -1,0 +1,2 @@
+# EazyFD
+Manage your FDs
