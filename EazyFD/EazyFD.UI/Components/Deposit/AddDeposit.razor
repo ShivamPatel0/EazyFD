@@ -1,0 +1,165 @@
+﻿@page "/add-deposit"
+@inject IMediator _mediator
+
+<div class="card" style="width: 50rem;">
+    <div class="card-header">
+        Add New Deposit
+    </div>
+    <div class="body">
+        <div class="container-fluid">
+            <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <div class="row pt-2">
+                    <div class="col">
+                        <label for="fdNumber" class="form-label">FD Number</label>
+                        <InputText id="fdNumber" class="form-control form-control-sm" @bind-Value="addDepositCommand.FdNumber" />
+                        <ValidationMessage For="() => addDepositCommand.FdNumber" />
+                    </div>
+                    <div class="col">
+                        <label for="bankAccount" class="form-label">Bank Account</label>
+                        <InputSelect id="bankAccount" class="form-control form-control-sm" @bind-Value="addDepositCommand.BankAccout">
+                            <option value="">Select Bank Account</option>
+                            <option value="1">Bank Account 1</option>
+                            <option value="2">Bank Account 2</option>
+                            <option value="3">Bank Account 3</option>
+                        </InputSelect>
+                        <ValidationMessage For="() => addDepositCommand.BankAccout" />
+                    </div>
+                </div>
+                <div class="row pt-2">
+                    <div class="col">
+                        <label for="depositDate" class="form-label">Deposit Date</label>
+                        <InputDate id="depositDate" class="form-control form-control-sm" @bind-Value="addDepositCommand.DepositDate" />
+                        <ValidationMessage For="() => addDepositCommand.DepositDate" />
+                    </div>
+                    <div class="col">
+                        <label for="depositAmount" class="form-label">Deposit Amount</label>
+                        <InputNumber id="depositAmount" class="form-control form-control-sm" @bind-Value="addDepositCommand.DepositAmount" />
+                        <ValidationMessage For="() => addDepositCommand.DepositAmount" />
+                    </div>
+                </div>
+                <div class="row pt-2">
+                    <div class="col">
+                        <label for="maturityDate" class="form-label">Maturity Date</label>
+                        <InputDate id="maturityDate" class="form-control form-control-sm" @bind-Value="addDepositCommand.MaturityDate" />
+                        <ValidationMessage For="() => addDepositCommand.MaturityDate" />
+                    </div>
+                    <div class="col">
+                        <label for="maturityAmount" class="form-label">Maturity Amount</label>
+                        <InputNumber id="maturityAmount" class="form-control form-control-sm" @bind-Value="addDepositCommand.MaturityAmount" />
+                        <ValidationMessage For="() => addDepositCommand.MaturityAmount" />
+                    </div>
+                </div>
+                <div class="row pt-2">
+                    <div class="col">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <InputTextArea id="remarks" class="form-control form-control-sm" @bind-Value="addDepositCommand.Remarks" />
+                        <ValidationMessage For="() => addDepositCommand.Remarks" />
+                    </div>
+                </div>
+                <hr />
+                <div class="card">
+                    <div class="card-header">
+                        Deposit amount source
+                    </div>
+                    <div class="body p-2">
+                        <div class="row justify-content-left">
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-primary" @onclick="AddSource">
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                        @foreach(var (each,index) in depositAmountSources.Select((item, index) => (item,index)))
+                        {
+                            <div class="row pt-2">
+                                <div class="col">
+                                    <label for="source" class="form-label">Source</label>
+                                    <InputText id="source" class="form-control form-control-sm" @bind-Value="each.Source" />
+                                </div>
+                                <div class="col">
+                                    <label for="accountDetails" class="form-label">Account Details</label>
+                                    <InputText id="accountDetails" class="form-control form-control-sm" @bind-Value="each.AccountDetails" />
+                                </div>
+                                <div class="col">
+                                    <label for="amount" class="form-label">Amount</label>
+                                    <InputNumber id="amount" class="form-control form-control-sm" @bind-Value="each.Amount" />
+                                </div>
+                                <div class="col align-self-end">
+                                    <div class="bottom-100">
+                                        <button type="button" class="btn btn-primary" @onclick="() => DeleteSource(index)">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start pt-2 pb-2">
+                    <button type="submit" class="btn btn-primary me-md-2">Save changes</button>
+                    <button type="button" class="btn btn-secondary" @onclick="Close">Close</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback oncancel { get; set; }
+    [Parameter] public List<AllDepositQueryDTO> allDeposits { get; set; }
+    private AddDepositCommand addDepositCommand = new AddDepositCommand();
+    private EditContext? editContext;
+    private List<EazyFD.Application.features.deposit.commands.DepositAmountSource> depositAmountSources = new List<EazyFD.Application.features.deposit.commands.DepositAmountSource>();
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(addDepositCommand);
+    }
+
+    private void Close()
+    {
+        oncancel.InvokeAsync();
+    }
+
+    private void HandleValidSubmit()
+    {
+        if (editContext.Validate())
+        {
+            addDepositCommand.DepositAmountSources = depositAmountSources;
+            var result = _mediator.Send(addDepositCommand);
+            allDeposits.Add(new AllDepositQueryDTO()
+            {
+                    FdNumber = addDepositCommand.FdNumber,
+                    BankAccout = addDepositCommand.BankAccout,
+                    DepositAmount = addDepositCommand.DepositAmount,    
+                    DepositDate = addDepositCommand.DepositDate,    
+                    DepositAmountSourcesDto = addDepositCommand.DepositAmountSources.Select(d => new EazyFD.Application.features.deposit.queries.dtos.DepositAmountSourceDto
+                    {
+                        Source = d.Source,
+                        AccountDetails = d.AccountDetails,
+                        Amount = d.Amount
+                    }).ToList(),
+                    MaturityAmount = addDepositCommand.MaturityAmount,
+                    MaturityDate = addDepositCommand.MaturityDate,
+                    Remarks = addDepositCommand.Remarks,
+            });
+            oncancel.InvokeAsync();
+
+            // Call the service here
+        }
+    }
+
+    private void AddSource()
+    {
+        depositAmountSources.Add(new EazyFD.Application.features.deposit.commands.DepositAmountSource()
+        {
+                AccountDetails = "Account Details",
+                Amount = 1000,
+                Source = "GPAY/AC Transfer",
+        });
+    }
+
+    private void DeleteSource(int index)
+    {
+        depositAmountSources.RemoveAt(index);
+    }
+}

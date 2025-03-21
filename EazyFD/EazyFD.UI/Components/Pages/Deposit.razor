@@ -1,0 +1,76 @@
+﻿@page "/deposit"
+@inject IMediator _mediator
+
+<div class="container-fluid">
+    <div class="row justify-content-left">
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary" @onclick="ShowAddDeposit">
+                Add Deposit
+            </button>
+        </div>
+    </div>
+</div>
+<hr/>
+@if (showAddDepositComponent)
+{
+    <AddDeposit oncancel="HideAddDeposit" allDeposits="allDeposits"></AddDeposit>
+}
+else
+{
+    @if (allDeposits == null || allDeposits.Count == 0)
+    {
+        <p><em>@message</em></p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fd Number</th>
+                    <th>Bank Accout</th>
+                    <th>Deposit Date</th>
+                    <th>Deposit Amount</th>
+                    <th>Maturity Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var each in allDeposits)
+                {
+                    <tr>
+                        <td>@each.FdNumber</td>
+                        <td>@each.BankAccout</td>
+                        <td>@each.DepositDate</td>
+                        <td>@each.DepositAmount</td>
+                        <td>@each.MaturityDate</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+
+@code {
+    private bool showAddDepositComponent = false;
+    private List<AllDepositQueryDTO> allDeposits = new List<AllDepositQueryDTO>();
+    private string message = "Loading...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        allDeposits = await _mediator.Send(new AllDepositsQuery());
+        if (allDeposits.Count == 0)
+        {
+            message = "No data found";
+        }
+    }
+
+    private void ShowAddDeposit()
+    {
+        showAddDepositComponent = true;
+    }
+
+    private void HideAddDeposit()
+    {
+        showAddDepositComponent = false;
+    }
+}
