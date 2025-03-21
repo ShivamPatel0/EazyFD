@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using EazyFD.Domain.entities;
@@ -11,18 +12,21 @@ namespace EazyFD.Infrastructure.repository
 {
     class DepositRepository : IDepositRepository
     {
+        private readonly LiteDatabaseAsync _context;
+        public DepositRepository()
+        {
+            _context = new LiteDatabaseAsync(@"EazyFD.db"); //LiteDB
+        }
         public async Task<int> AddDeposit(Deposit deposit)
         {
-            using var context = new LiteDatabaseAsync(@"EazyFD.db");
-            var deposits = context.GetCollection<Deposit>("deposits");
+            var deposits = _context.GetCollection<Deposit>("deposits");
             await deposits.InsertAsync(deposit);
             return 1;
         }
 
         public async Task<List<Deposit>> GetAllDeposits()
         {
-            using var context = new LiteDatabaseAsync(@"EazyFD.db");
-            var deposits = context.GetCollection<Deposit>("deposits");
+            var deposits = _context.GetCollection<Deposit>("deposits");
             return await deposits.Query().ToListAsync();
         }
     }
